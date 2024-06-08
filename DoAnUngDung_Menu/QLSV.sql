@@ -1,0 +1,349 @@
+﻿CREATE DATABASE QuanLySinhVien;
+USE QuanLySinhVien;
+
+-- Tạo bảng SINHVIEN
+CREATE TABLE SINHVIEN
+(
+    MASV char(20) NOT NULL,
+    HOTENSV nvarchar(100) NOT NULL,
+    GIOITINH char(3),
+    NGAYSINH date,
+    DIACHI nvarchar(100),
+    MAKHOA char(6) NOT NULL,
+    SODIENTHOAI char(10)
+);
+
+-- Tạo bảng KHOA
+CREATE TABLE KHOA
+(
+    MAKHOA char(6) NOT NULL,
+    TENKHOA nvarchar(50)
+);
+
+-- Tạo bảng MONHOC
+CREATE TABLE MONHOC
+(
+    MAMH char(6) NOT NULL,
+    TENMH nvarchar(50),
+    MAKHOA char(6) NOT NULL
+);
+
+-- Tạo bảng KETQUA
+CREATE TABLE KETQUA
+(
+    MASV char(20) NOT NULL,
+    MAMH char(6) NOT NULL,
+    DIEMQUATRINH float,
+    DIEMTHI float,
+    DIEMTRUNGBINH float
+);
+
+-- Thêm khóa chính cho các bảng
+ALTER TABLE SINHVIEN ADD CONSTRAINT PK_SINHVIEN_MASV PRIMARY KEY (MASV);
+ALTER TABLE KHOA ADD CONSTRAINT PK_KHOA_MAKHOA PRIMARY KEY (MAKHOA);
+ALTER TABLE MONHOC ADD CONSTRAINT PK_MONHOC_MAMH PRIMARY KEY (MAMH);
+ALTER TABLE KETQUA ADD CONSTRAINT PK_KETQUA_MASV_MAMH PRIMARY KEY(MASV, MAMH);
+
+-- Thêm khóa ngoại cho các bảng
+ALTER TABLE SINHVIEN ADD CONSTRAINT FK_SINHVIEN_KHOA FOREIGN KEY(MAKHOA) REFERENCES KHOA(MAKHOA);
+ALTER TABLE MONHOC ADD CONSTRAINT FK_MONHOC_KHOA FOREIGN KEY(MAKHOA) REFERENCES KHOA(MAKHOA);
+ALTER TABLE KETQUA ADD CONSTRAINT FK_KETQUA_SINHVIEN FOREIGN KEY(MASV) REFERENCES SINHVIEN(MASV);
+ALTER TABLE KETQUA ADD CONSTRAINT FK_KETQUA_MONHOC FOREIGN KEY(MAMH) REFERENCES MONHOC(MAMH);
+
+-- Thêm dữ liệu cho bảng KHOA
+INSERT INTO KHOA (MAKHOA, TENKHOA) VALUES
+('CNTT01', 'Khoa Công nghệ thông tin'),
+('QTKD01', 'Khoa Quản trị kinh doanh');
+
+-- Thêm dữ liệu cho bảng SINHVIEN
+INSERT INTO SINHVIEN (MASV, HOTENSV, GIOITINH, NGAYSINH, DIACHI, MAKHOA, SODIENTHOAI) VALUES
+('SV001', 'Nguyen Van A', 'Nam', '2000-01-01', '123 Duong ABC', 'CNTT01', '0123456789'),
+('SV002', 'Tran Thi B', 'Nu', '2001-02-02', '456 Duong XYZ', 'QTKD01', '0987654321');
+
+-- Thêm dữ liệu cho bảng MONHOC
+INSERT INTO MONHOC (MAMH, TENMH, MAKHOA) VALUES
+('MH001', 'Cau truc du lieu', 'CNTT01'),
+('MH002', 'Quan tri nhan su', 'QTKD01');
+
+-- Thêm dữ liệu cho bảng KETQUA
+INSERT INTO KETQUA (MASV, MAMH, DIEMQUATRINH, DIEMTHI, DIEMTRUNGBINH) VALUES
+('SV001', 'MH001', 8.5, 7.5, 8.0),
+('SV002', 'MH002', 7.0, 6.5, 6.75);
+
+INSERT INTO NGUOIDUNG (ID_NGUOIDUNG, TENNGUOIDUNG, MATKHAU)
+VALUES ('UserID1', N'Username1', N'Password1'),
+       ('UserID2', N'Username2', N'Password2');
+
+-- Tạo bảng NGUOIDUNG
+-- Tạo bảng lưu thông tin người dùng với ID người dùng là mã sinh viên
+CREATE TABLE NGUOIDUNG
+(
+    ID_NGUOIDUNG CHAR(20) PRIMARY KEY,
+    TENNGUOIDUNG NVARCHAR(50) NOT NULL,
+    MATKHAU NVARCHAR(100) NOT NULL,
+);
+
+-- Doi mat khau
+-- Tạo stored procedure để cập nhật mật khẩu của sinh viên
+CREATE PROC sp_ChangePassword
+    @sId_NguoiDung CHAR(20),
+    @sNewPassword NVARCHAR(100)
+AS
+BEGIN
+    UPDATE NGUOIDUNG
+    SET MATKHAU = @sNewPassword
+    WHERE ID_NGUOIDUNG = @sId_NguoiDung;
+END;
+
+-- SP Thêm người dùng
+-- SP Insert User
+CREATE PROC sp_InsertUser
+    @sId_NguoiDung CHAR(20),
+    @sTenNguoiDung NVARCHAR(50),
+    @sMatKhau NVARCHAR(100)
+AS
+BEGIN
+    INSERT INTO NGUOIDUNG (ID_NGUOIDUNG, TENNGUOIDUNG, MATKHAU)
+    VALUES (@sId_NguoiDung, @sTenNguoiDung, @sMatKhau);
+END;
+
+-- SP Thêm sinh viên
+CREATE PROC sp_InsertSinhVien(
+    @sMASV char(20), 
+    @sHOTENSV nvarchar(100),
+    @sGIOITINH char(3),
+    @sNGAYSINH date,
+    @sDIACHI nvarchar(100),
+    @sMAKHOA char(6),
+    @sSODIENTHOAI char(10)
+)
+AS
+BEGIN
+    INSERT INTO SINHVIEN(MASV, HOTENSV, GIOITINH, NGAYSINH, DIACHI, MAKHOA, SODIENTHOAI) 
+    VALUES(@sMASV, @sHOTENSV, @sGIOITINH, @sNGAYSINH, @sDIACHI, @sMAKHOA, @sSODIENTHOAI);
+END;
+
+-- SP Thêm khoa
+CREATE PROC sp_InsertKhoa(@sMAKHOA char(6), @sTENKHOA nvarchar(50))
+AS
+BEGIN
+    INSERT INTO KHOA(MAKHOA, TENKHOA)
+    VALUES (@sMAKHOA, @sTENKHOA);
+END;
+
+-- SP Thêm môn học
+CREATE PROC sp_InsertMonHoc(@sMAMH char(6), @sTENMH nvarchar(50), @sMAKHOA char(6))
+AS
+BEGIN
+    INSERT INTO MONHOC(MAMH, TENMH, MAKHOA)
+    VALUES (@sMAMH, @sTENMH, @sMAKHOA);
+END;
+
+-- SP Thêm kết quả
+CREATE PROC sp_InsertKetQua(@sMASV char(20), @sMAMH char(6), @sDIEMQUATRINH float, @sDIEMTHI float, @sDIEMTRUNGBINH float)
+AS
+BEGIN
+    INSERT INTO KETQUA(MASV, MAMH, DIEMQUATRINH, DIEMTHI, DIEMTRUNGBINH)
+    VALUES (@sMASV, @sMAMH, @sDIEMQUATRINH, @sDIEMTHI, @sDIEMTRUNGBINH);
+END;
+
+-- SP Xóa sinh viên
+CREATE PROC sp_DeleteSinhVien(@sMASV char(20))
+AS 
+BEGIN
+    DELETE SINHVIEN WHERE MASV = @sMASV;
+END;
+
+-- SP Xóa khoa
+CREATE PROC sp_DeleteKhoa(@sMAKHOA char(6))
+AS
+BEGIN
+    DELETE KHOA WHERE MAKHOA = @sMAKHOA;
+END;
+
+-- SP Xóa môn học
+CREATE PROC sp_DeleteMonHoc(@sMAMH char(6))
+AS
+BEGIN
+    DELETE MONHOC WHERE MAMH = @sMAMH;
+END;
+
+-- SP Xóa kết quả
+CREATE PROC sp_DeleteKetQua(@sMASV char(20), @sMAMH char(6))
+AS 
+BEGIN
+    DELETE KETQUA WHERE MASV = @sMASV AND MAMH = @sMAMH;
+END;
+
+-- SP Cập nhật sinh viên
+CREATE PROC sp_UpdateSinhVien(@sMASV char(20), @sHOTENSV nvarchar(100), @sGIOITINH char(3), @sNGAYSINH date, @sDIACHI nvarchar(100), @sMAKHOA char(6), @sSODIENTHOAI char(10))
+AS
+BEGIN
+    UPDATE SINHVIEN 
+    SET HOTENSV = @sHOTENSV, GIOITINH = @sGIOITINH, NGAYSINH = @sNGAYSINH, DIACHI = @sDIACHI, MAKHOA = @sMAKHOA, SODIENTHOAI = @sSODIENTHOAI 
+    WHERE MASV = @sMASV;
+END;
+
+-- SP Cập nhật khoa
+CREATE PROC sp_UpdateKhoa(@sMAKHOA char(6), @sTENKHOA nvarchar(50))
+AS
+BEGIN
+    UPDATE KHOA SET TENKHOA = @sTENKHOA WHERE MAKHOA = @sMAKHOA;
+END;
+
+-- SP Cập nhật môn học
+CREATE PROC sp_UpdateMonHoc(@sMAMH char(6), @sTENMH nvarchar(50), @sMAKHOA char(6))
+AS
+BEGIN
+    UPDATE MONHOC SET TENMH = @sTENMH, MAKHOA = @sMAKHOA WHERE MAMH = @sMAMH;
+END;
+
+-- SP Cập nhật kết quả
+CREATE PROC sp_UpdateKetQua(@sMASV char(20), @sMAMH char(6), @sDIEMQUATRINH float, @sDIEMTHI float, @sDIEMTRUNGBINH float)
+AS
+BEGIN
+    UPDATE KETQUA SET DIEMQUATRINH = @sDIEMQUATRINH, DIEMTHI = @sDIEMTHI, DIEMTRUNGBINH = @sDIEMTRUNGBINH WHERE MASV = @sMASV AND MAMH = @sMAMH;
+END;
+
+-- SP Lấy tất cả dữ liệu của bảng (tên bảng truyền vào)
+CREATE PROCEDURE sp_Get_Table
+    @Table_Name SYSNAME
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @DynamicSQL NVARCHAR(4000);
+    SET @DynamicSQL = N'SELECT * FROM ' + @Table_Name;
+    EXECUTE sp_executesql @DynamicSQL;
+END;
+
+-- SP Lấy tất cả dữ liệu
+CREATE PROCEDURE sp_GetInfo
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        SV.HOTENSV AS 'Tên sinh viên',
+        K.TENKHOA AS 'Tên khoa',
+        MH.TENMH AS 'Tên môn học',
+        KQ.DIEMQUATRINH AS 'Điểm quá trình',
+        KQ.DIEMTHI AS 'Điểm thi',
+        KQ.DIEMTRUNGBINH AS 'Điểm trung bình'
+    FROM
+        SINHVIEN SV 
+        JOIN KHOA K ON SV.MAKHOA = K.MAKHOA
+        JOIN KETQUA KQ ON SV.MASV = KQ.MASV
+        JOIN MONHOC MH ON KQ.MAMH = MH.MAMH;
+END;
+
+-- SP Tìm kiếm sinh viên theo tên
+CREATE PROCEDURE sp_SearchStudentByName
+    @sTenSV NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        SV.HOTENSV AS 'Tên sinh viên',
+        K.TENKHOA AS 'Tên khoa',
+        MH.TENMH AS 'Tên môn học',
+        KQ.DIEMQUATRINH AS 'Điểm quá trình',
+        KQ.DIEMTHI AS 'Điểm thi',
+        KQ.DIEMTRUNGBINH AS 'Điểm trung bình'
+    FROM
+        SINHVIEN SV 
+        JOIN KHOA K ON SV.MAKHOA = K.MAKHOA
+        JOIN KETQUA KQ ON SV.MASV = KQ.MASV
+        JOIN MONHOC MH ON KQ.MAMH = MH.MAMH
+    WHERE
+        SV.HOTENSV LIKE '%' + @sTenSV + '%';
+END;
+
+-- Lấy bảng điểm DS sinh viên
+CREATE PROC LayBangDiemDSSV
+AS
+SELECT SINHVIEN.MASV, SINHVIEN.HOTENSV, MONHOC.TENMH, KETQUA.DIEMQUATRINH, KETQUA.DIEMTHI, KETQUA.DIEMTRUNGBINH
+FROM SINHVIEN, MONHOC, KETQUA
+WHERE SINHVIEN.MASV = KETQUA.MASV AND MONHOC.MAMH = KETQUA.MAMH;
+
+-- Lấy bảng điểm theo 1 sv
+CREATE PROC LayyBangDiemTheo1SV(@MSSV char(20))
+AS
+SELECT SINHVIEN.MASV, SINHVIEN.HOTENSV, MONHOC.TENMH, KETQUA.DIEMQUATRINH, KETQUA.DIEMTHI, KETQUA.DIEMTRUNGBINH
+FROM SINHVIEN, MONHOC, KETQUA
+WHERE SINHVIEN.MASV = KETQUA.MASV AND MONHOC.MAMH = KETQUA.MAMH AND SINHVIEN.MASV = @MSSV;
+
+-- SP Sắp xếp giảm dần theo điểm trung bình (theo khoa)
+CREATE PROC SapXepGiamDan(@TenKhoa NVARCHAR(50))
+AS
+SELECT 
+    SV.HOTENSV AS 'TEN SINH VIEN',
+    K.TENKHOA AS 'TEN KHOA',
+    MH.TENMH AS 'TEN MON HOC',
+    KQ.DIEMTRUNGBINH AS 'DIEMTRUNGBINH'
+FROM
+    SINHVIEN SV 
+    JOIN KHOA K ON SV.MAKHOA = K.MAKHOA
+    JOIN KETQUA KQ ON SV.MASV = KQ.MASV
+    JOIN MONHOC MH ON KQ.MAMH = MH.MAMH
+WHERE K.TENKHOA = @TenKhoa
+ORDER BY KQ.DIEMTRUNGBINH DESC;
+
+-- SP Sắp xếp tăng dần theo điểm trung bình (theo khoa)
+CREATE PROC SapXepTangDan(@TenKhoa NVARCHAR(50))
+AS
+SELECT 
+    SV.HOTENSV AS 'TEN SINH VIEN',
+    K.TENKHOA AS 'TEN KHOA',
+    MH.TENMH AS 'TEN MON HOC',
+    KQ.DIEMTRUNGBINH AS 'DIEMTRUNGBINH'
+FROM
+    SINHVIEN SV 
+    JOIN KHOA K ON SV.MAKHOA = K.MAKHOA
+    JOIN KETQUA KQ ON SV.MASV = KQ.MASV
+    JOIN MONHOC MH ON KQ.MAMH = MH.MAMH
+WHERE K.TENKHOA = @TenKhoa
+ORDER BY KQ.DIEMTRUNGBINH ASC;
+
+-- SP Lấy danh sách sinh viên rớt môn
+CREATE PROCEDURE sp_GetRotMon
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT 
+        SV.HOTENSV AS 'Tên sinh viên',
+        K.TENKHOA AS 'Tên khoa',
+        MH.TENMH AS 'Tên môn học',
+        KQ.DIEMQUATRINH AS 'Điểm quá trình',
+        KQ.DIEMTHI AS 'Điểm thi',
+        KQ.DIEMTRUNGBINH AS 'Điểm trung bình'
+    FROM
+        SINHVIEN SV 
+        JOIN KHOA K ON SV.MAKHOA = K.MAKHOA
+        JOIN KETQUA KQ ON SV.MASV = KQ.MASV
+        JOIN MONHOC MH ON KQ.MAMH = MH.MAMH
+		WHERE KQ.DIEMTRUNGBINH < 5
+END;
+
+--Lấy điểm trung bình tất cả sinh viên
+CREATE PROCEDURE sp_GetDiemTrungBinh
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+		AVG(DIEMTRUNGBINH) AS DIEMTRUNGBINH_TONG
+	FROM
+		KETQUA
+	GROUP BY
+		MASV;
+END;
+
+
+
+--Xuat danh sach môn hoc theo ma khoa
+CREATE PROC layDanhSachMonHocc
+AS
+SELECT *
+FROM MONHOC
+
+exec layDanhSachMonHocc
